@@ -175,7 +175,8 @@ update msg model =
                     Cell cellId (Selected model.currentPlayer) False
 
                 updatedMatrix =
-                    model.matrix |> Dict.update cellId (\_ -> Just updatedCell)
+                    model.matrix
+                        |> Dict.update cellId (\_ -> Just updatedCell)
 
                 cmd =
                     if (model.playCounter + 1) > 3 then
@@ -207,8 +208,11 @@ update msg model =
                 winRow =
                     checkWin model.matrix checkList
 
+                _ =
+                    Debug.log "isWin" winRow
+
                 isWin =
-                    if List.length winRow == 1 then
+                    if (List.length winRow == 1) || (List.length winRow > 1 && model.playCounter == 9) then
                         winRow
                             |> List.head
                     else
@@ -223,7 +227,13 @@ update msg model =
                             model.matrix
 
                 gameState =
-                    if (List.isEmpty model.remainingOPossibilities || List.isEmpty model.remainingXPossibilities) && isWin == Nothing then
+                    if
+                        isWin
+                            == Nothing
+                            && (List.isEmpty model.remainingOPossibilities
+                                    || List.isEmpty model.remainingXPossibilities
+                               )
+                    then
                         Over Stalemate
                     else if isWin /= Nothing then
                         otherGuy model.currentPlayer
@@ -383,25 +393,22 @@ displayCurrentPlayer ticTacToe gameState =
         nextGameLink =
             case gameState of
                 Play ->
-                    text ""
+                    toString ticTacToe ++ "'s turn" |> text
 
                 Over becauseOf ->
                     case becauseOf of
                         Win winner ->
                             a [ onClick Reset ]
-                                [ "Congratulations " ++ toString winner ++ " won! " |> text
-                                , text " New game"
+                                [ "Congratulations " ++ toString winner ++ " won! double or nothing??" |> text
                                 ]
 
                         Stalemate ->
                             a [ onClick Reset ]
-                                [ "Another stalemate " |> text
-                                , text "New game"
+                                [ text "Another stalemate :/ try another game?"
                                 ]
     in
     div []
-        [ toString ticTacToe ++ " " |> text
-        , nextGameLink
+        [ nextGameLink
         ]
 
 
