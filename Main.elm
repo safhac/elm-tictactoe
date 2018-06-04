@@ -155,45 +155,48 @@ update msg model =
             { model | currentPlayer = player } ! []
 
         Selection cellId ->
-            let
-                ( newRemainingXPossibilities, newRemainingOPossibilities, nextPlayer ) =
-                    case model.currentPlayer of
-                        X ->
-                            ( model.remainingXPossibilities
-                            , filterList model.remainingOPossibilities cellId
-                            , O
-                            )
+            if model.gameState == Play then
+                let
+                    ( newRemainingXPossibilities, newRemainingOPossibilities, nextPlayer ) =
+                        case model.currentPlayer of
+                            X ->
+                                ( model.remainingXPossibilities
+                                , filterList model.remainingOPossibilities cellId
+                                , O
+                                )
 
-                        O ->
-                            ( filterList model.remainingXPossibilities cellId
-                            , model.remainingOPossibilities
-                            , X
-                            )
+                            O ->
+                                ( filterList model.remainingXPossibilities cellId
+                                , model.remainingOPossibilities
+                                , X
+                                )
 
-                updatedCell : Cell
-                updatedCell =
-                    Cell cellId (Selected model.currentPlayer) False
+                    updatedCell : Cell
+                    updatedCell =
+                        Cell cellId (Selected model.currentPlayer) False
 
-                updatedMatrix =
-                    model.matrix
-                        |> Dict.update cellId (\_ -> Just updatedCell)
+                    updatedMatrix =
+                        model.matrix
+                            |> Dict.update cellId (\_ -> Just updatedCell)
 
-                cmd =
-                    if (model.playCounter + 1) > 3 then
-                        Task.succeed CheckWin
-                            |> Task.perform identity
-                    else
-                        Cmd.none
-            in
-            ( { model
-                | currentPlayer = nextPlayer
-                , remainingOPossibilities = newRemainingOPossibilities
-                , remainingXPossibilities = newRemainingXPossibilities
-                , playCounter = model.playCounter + 1
-                , matrix = updatedMatrix
-              }
-            , cmd
-            )
+                    cmd =
+                        if (model.playCounter + 1) > 3 then
+                            Task.succeed CheckWin
+                                |> Task.perform identity
+                        else
+                            Cmd.none
+                in
+                ( { model
+                    | currentPlayer = nextPlayer
+                    , remainingOPossibilities = newRemainingOPossibilities
+                    , remainingXPossibilities = newRemainingXPossibilities
+                    , playCounter = model.playCounter + 1
+                    , matrix = updatedMatrix
+                  }
+                , cmd
+                )
+            else
+                model ! []
 
         CheckWin ->
             let
