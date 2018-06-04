@@ -76,7 +76,7 @@ type Msg
 
 type GameState
     = Play
-    | Over
+    | Over GameEndState
 
 
 type GameEndState
@@ -223,8 +223,12 @@ update msg model =
                             model.matrix
 
                 gameState =
-                    if List.isEmpty model.remainingOPossibilities || List.isEmpty model.remainingXPossibilities || isWin /= Nothing then
-                        Over
+                    if (List.isEmpty model.remainingOPossibilities || List.isEmpty model.remainingXPossibilities) && isWin == Nothing then
+                        Over Stalemate
+                    else if isWin /= Nothing then
+                        otherGuy model.currentPlayer
+                            |> Win
+                            |> Over
                     else
                         Play
             in
@@ -238,6 +242,16 @@ update msg model =
 
         Reset ->
             init
+
+
+otherGuy : TicTacToe -> TicTacToe
+otherGuy ticTacToe =
+    case ticTacToe of
+        X ->
+            O
+
+        O ->
+            X
 
 
 
@@ -371,11 +385,22 @@ displayCurrentPlayer ticTacToe gameState =
                 Play ->
                     text ""
 
-                Over ->
-                    a [ onClick Reset ] [ text "New game" ]
+                Over becauseOf ->
+                    case becauseOf of
+                        Win winner ->
+                            a [ onClick Reset ]
+                                [ "Congratulations " ++ toString winner ++ " won! " |> text
+                                , text " New game"
+                                ]
+
+                        Stalemate ->
+                            a [ onClick Reset ]
+                                [ "Another stalemate " |> text
+                                , text "New game"
+                                ]
     in
     div []
-        [ toString ticTacToe |> text
+        [ toString ticTacToe ++ " " |> text
         , nextGameLink
         ]
 
