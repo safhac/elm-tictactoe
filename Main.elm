@@ -4,6 +4,7 @@ import Dict exposing (Dict)
 import Html exposing (Html, a, div, text)
 import Html.Attributes exposing (style)
 import Html.Events exposing (onClick)
+import Random
 import Set exposing (fromList, member, size)
 import Task exposing (perform)
 
@@ -39,26 +40,27 @@ type alias Model =
 
 init : ( Model, Cmd Msg )
 init =
-    { currentPlayer = X
-    , gameState = Play
-    , playCounter = 0
-    , remainingOPossibilities = winList
-    , remainingXPossibilities = winList
-    , winningRow = Nothing
-    , matrix =
-        keys
-            |> List.map
-                (\k ->
-                    ( k
-                    , { id = k
-                      , entry = Empty
-                      , isPartOfWin = False
-                      }
+    ( { currentPlayer = X
+      , gameState = Play
+      , playCounter = 0
+      , remainingOPossibilities = winList
+      , remainingXPossibilities = winList
+      , winningRow = Nothing
+      , matrix =
+            keys
+                |> List.map
+                    (\k ->
+                        ( k
+                        , { id = k
+                          , entry = Empty
+                          , isPartOfWin = False
+                          }
+                        )
                     )
-                )
-            |> Dict.fromList
-    }
-        ! []
+                |> Dict.fromList
+      }
+    , Random.generate GameStart coinFlip
+    )
 
 
 
@@ -68,6 +70,7 @@ init =
 type Msg
     = Selection CellID
     | CheckWin
+    | GameStart TicTacToe
     | Reset
 
 
@@ -106,6 +109,18 @@ type alias Row =
     List CellID
 
 
+coinFlip : Random.Generator TicTacToe
+coinFlip =
+    Random.map
+        (\b ->
+            if b then
+                X
+            else
+                O
+        )
+        Random.bool
+
+
 emptyCell : Cell
 emptyCell =
     Cell -1 Empty False
@@ -136,6 +151,9 @@ keys =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        GameStart player ->
+            { model | currentPlayer = player } ! []
+
         Selection cellId ->
             let
                 ( newRemainingXPossibilities, newRemainingOPossibilities, nextPlayer ) =
